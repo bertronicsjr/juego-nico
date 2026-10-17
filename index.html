@@ -1,0 +1,1514 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>404 // ALBERTO Y NICO ENCONTRADOS</title>
+    <style>
+        :root {
+            --bg-color: #0d0d0d;
+            --card-bg: #161616;
+            --pink-accent: #ff69b4;
+            --pink-light: #ffb6c1;
+            --text-color: #f5f5f5;
+            --border-color: #333333;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0; padding: 0;
+            user-select: none;
+            font-family: 'Courier New', Courier, monospace, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        #game-container {
+            width: 100vw;
+            height: 100vh;
+            max-width: 1200px;
+            max-height: 850px;
+            background-color: #000;
+            border: 1px solid var(--border-color);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            border-radius: 12px;
+        }
+
+        /* PANTALLAS */
+        .screen {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+            position: relative;
+            height: 100%;
+        }
+        .screen.active { display: flex; }
+
+        /* ESTILOS DE TERMINALES */
+        .terminal-screen {
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .glitch-title {
+            font-size: 2.5rem;
+            color: var(--pink-accent);
+            text-shadow: 2px 2px #fff;
+            margin-bottom: 5px;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        .terminal-box {
+            background-color: var(--card-bg);
+            border: 1px solid var(--pink-accent);
+            border-radius: 8px;
+            padding: 22px;
+            width: 100%;
+            max-width: 650px;
+            margin: 20px 0;
+            text-align: left;
+            font-size: 0.95rem;
+            line-height: 1.7;
+            color: #ddd;
+            box-shadow: 0 0 20px rgba(255, 105, 180, 0.15);
+            min-height: 220px;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            background-color: var(--pink-accent);
+            animation: blink 0.8s infinite;
+        }
+
+        @keyframes blink { 50% { opacity: 0; } }
+
+        .btn-pink {
+            background-color: var(--pink-accent);
+            color: #000;
+            border: none;
+            padding: 14px 28px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(255, 105, 180, 0.4);
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            text-transform: uppercase;
+        }
+        .btn-pink.visible { opacity: 1; transform: translateY(0); }
+
+        /* ESTILOS GENERALES DE NIVELES */
+        .top-bar {
+            background: rgba(22, 22, 22, 0.95);
+            padding: 10px 20px;
+            border-bottom: 2px solid var(--pink-accent);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            z-index: 10;
+        }
+
+        .badge-nivel {
+            background: var(--pink-accent);
+            color: #000;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .mission-info {
+            color: var(--pink-light);
+            font-weight: bold;
+            transition: transform 0.3s ease;
+        }
+        .mission-info.pulse {
+            transform: scale(1.1);
+            color: #00ff88;
+        }
+
+        .btn-pista {
+            background: #2b1f2b;
+            border: 1px solid var(--pink-accent);
+            color: var(--pink-light);
+            padding: 6px 14px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        .btn-pista:hover {
+            background: var(--pink-accent);
+            color: #000;
+        }
+
+        .scene-viewport {
+            position: relative;
+            flex: 1;
+            overflow: hidden;
+            background: #111;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .scene-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        /* HOTSPOTS */
+        .hotspot {
+            position: absolute;
+            cursor: pointer;
+            border-radius: 50%;
+            background: transparent;
+            border: 2px dashed transparent;
+            transition: all 0.2s;
+        }
+
+        .hotspot:hover {
+            border: 2px dashed var(--pink-accent);
+            background: rgba(255, 105, 180, 0.15);
+            animation: rotateDash 4s linear infinite;
+        }
+
+        @keyframes rotateDash {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hotspot.found {
+            border: 2px solid #00ff88 !important;
+            background: rgba(0, 255, 136, 0.4) !important;
+            pointer-events: none;
+            animation: successFlash 0.6s ease !important;
+        }
+
+        @keyframes successFlash {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.9); }
+            50% { transform: scale(1.4); box-shadow: 0 0 25px 15px rgba(0, 255, 136, 0.6); background: rgba(0, 255, 136, 0.8); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 255, 136, 0); }
+        }
+
+        .hotspot.hint-blink {
+            animation: hintFlash 0.4s ease infinite alternate !important;
+            border: 2px solid #ffff00 !important;
+            background: rgba(255, 255, 0, 0.4) !important;
+        }
+
+        @keyframes hintFlash {
+            from { transform: scale(1); opacity: 0.4; }
+            to { transform: scale(1.25); opacity: 1; box-shadow: 0 0 15px #ffff00; }
+        }
+
+        /* BLOQUEOS */
+        .locked-target {
+            opacity: 0.4;
+            filter: grayscale(100%);
+            pointer-events: none;
+        }
+        .unlocked-target {
+            opacity: 1;
+            filter: none;
+            pointer-events: auto;
+            border: 2px dashed #00ff88;
+            animation: pulseTarget 1.5s infinite;
+        }
+
+        @keyframes pulseTarget {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0,255,136, 0.4); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(0,255,136, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0,255,136, 0); }
+        }
+
+        /* COORDENADAS NIVELES 1 AL 4 */
+        #hs-alberto    { top: 40%; left: 19%; width: 9%; height: 16%; border-radius: 25%; }
+        #hs-walle      { top: 63%; left: 94%; width: 7%; height: 16%; }
+        #hs-cineplanet { top: 70%; left: 78%; width: 6%; height: 16%; }
+        #hs-trebol     { top: 79%; left: 83%; width: 4%; height: 10%; }
+        #hs-kitty      { top: 14%; left: 2%; width: 4%; height: 8%; }
+        #hs-corona     { top: 84%; left: 16%; width: 4%; height: 6%; }
+
+        #hs-milkito    { top: 13%; left: 41%; width: 6%; height: 8%; }
+        #hs-fresa      { top: 79%; left: 31%; width: 4%; height: 8%; }
+        #hs-fideos     { top: 68%; left: 51%; width: 4%; height: 6%; }
+        #hs-alberto2   { top: 45%; left: 63%; width: 6%; height: 26%; border-radius: 25%; }
+        #hs-nico2      { top: 46%; left: 45%; width: 7%; height: 16%; border-radius: 25%; }
+
+        #hs-gaby       { top: 6%;  left: 4%;  width: 9%; height: 19%; border-radius: 10%; }
+        #hs-robot      { top: 5%;  left: 14%; width: 11%; height: 20%; border-radius: 20%; }
+        #hs-walle3     { top: 28%; left: 17%; width: 8%; height: 14%; border-radius: 20%; }
+        #hs-cristal    { top: 38%; left: 86%; width: 12%; height: 32%; border-radius: 15%; }
+        #hs-temu       { top: 67%; left: 83%; width: 15%; height: 26%; border-radius: 15%; }
+        #hs-laptop     { top: 49%; left: 62%; width: 13%; height: 16%; border-radius: 15%; }
+
+        #hs-adviento   { top: 35%; left: 6%;  width: 18%; height: 24%; border-radius: 15%; }
+        #hs-frappe     { top: 68%; left: 45%; width: 8%;  height: 22%; border-radius: 20%; }
+        #hs-lasagna    { top: 80%; left: 53%; width: 11%; height: 18%; border-radius: 20%; }
+        #hs-dulces     { top: 81%; left: 74%; width: 23%; height: 20%; border-radius: 15%; }
+        #hs-walle4     { top: 49%; left: 45%; width: 7%;  height: 12%; border-radius: 20%; }
+        #hs-pijama     { top: 12%; left: 60%; width: 11%; height: 42%; border-radius: 15%; }
+
+        /* COORDENADAS NIVEL 5 (NODOS DE HISTORIA EN NV5-B.jpg) */
+        #hs-nodo1      { top: 16%; left: 3%; width: 12%; height: 14%; border-radius: 20%; } /* Nivel 1: Maquisur */
+        #hs-nodo2      { top: 12%; left: 59%; width: 12%; height: 16%; border-radius: 20%; } /* Nivel 2: Cineplanet */
+        #hs-nodo3      { top: 5%; left: 81%; width: 12%; height: 16%; border-radius: 20%; } /* Girasoles */
+        #hs-nodo4      { top: 39%; left: 2%;  width: 12%; height: 16%; border-radius: 20%; } /* Bebidas */
+        #hs-nodo5      { top: 29%; left: 85%; width: 12%; height: 16%; border-radius: 20%; } /* Mascarilla */
+        #hs-nucleo     { top: 39%; left: 43%; width: 13%; height: 22%; border-radius: 50%; } /* Núcleo Holográfico Central */
+
+        /* PANEL INFERIOR */
+        .bottom-panel {
+            background: rgba(22, 22, 22, 0.95);
+            border-top: 1px solid var(--border-color);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .inventory-slots {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .inv-card {
+            background: #1e1b22;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 5px 8px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.7rem;
+            color: #aaa;
+            transition: all 0.3s ease;
+        }
+        .inv-card.unlocked {
+            border-color: var(--pink-accent);
+            color: var(--text-color);
+            background: #2b1f2b;
+            box-shadow: 0 0 15px rgba(255, 105, 180, 0.6);
+            transform: scale(1.05);
+            animation: cardFlash 0.5s ease;
+        }
+
+        @keyframes cardFlash {
+            0% { background: #ff69b4; color: #000; }
+            100% { background: #2b1f2b; color: var(--text-color); }
+        }
+
+        .inv-card.special-target {
+            border-color: #00ff88;
+            background: #112b1e;
+        }
+        .inv-card span { font-weight: bold; color: var(--pink-light); }
+
+        /* MODALES */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.88);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            padding: 20px;
+        }
+        .modal-overlay.show { display: flex !important; }
+        
+        .modal-card {
+            background: var(--card-bg);
+            border: 2px solid var(--pink-accent);
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 0 25px rgba(255, 105, 180, 0.3);
+            max-width: 450px;
+            max-height: 95vh;
+            overflow-y: auto;
+        }
+
+        .couple-img {
+            width: 100%;
+            max-height: 320px;
+            object-fit: contain;
+            background: #000;
+            border-radius: 8px;
+            border: 1px solid var(--pink-accent);
+            margin: 12px 0;
+        }
+
+        .toast-msg {
+            position: fixed;
+            bottom: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e1b22;
+            border: 1px solid var(--pink-accent);
+            color: var(--text-color);
+            padding: 12px 22px;
+            border-radius: 16px;
+            font-size: 0.8rem;
+            z-index: 50;
+            display: none;
+            max-width: 90vw;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(255, 105, 180, 0.3);
+        }
+        .toast-msg.show { display: block; animation: fadeInOut 2.5s ease; }
+
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translate(-50%, 15px); }
+            12% { opacity: 1; transform: translate(-50%, 0); }
+            88% { opacity: 1; transform: translate(-50%, 0); }
+            100% { opacity: 0; transform: translate(-50%, -10px); }
+        }
+
+        /* GLITCH Y EFECTOS FINALES DE PROPUESTA */
+        body.glitch-active {
+            animation: screenGlitch 0.2s infinite;
+        }
+
+        @keyframes screenGlitch {
+            0% { filter: hue-rotate(0deg); transform: translate(0,0); }
+            50% { filter: hue-rotate(90deg); transform: translate(-2px, 2px); }
+            100% { filter: hue-rotate(0deg); transform: translate(0,0); }
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <!-- NIVEL 0: INICIO INTERACTIVO (TERMINAL) -->
+    <div id="lvl0" class="screen terminal-screen active">
+        <div class="glitch-title">404</div>
+        <h3 style="color: var(--pink-light);">ALBERTO NO ENCONTRADO</h3>
+        
+        <div class="terminal-box">
+            <span id="typewriter0"></span><span class="cursor" id="cursor0">&nbsp;</span>
+        </div>
+
+        <button id="start-btn0" class="btn-pink" onclick="iniciarJuego()">[ BUSCAR A ALBERTO ]</button>
+    </div>
+
+    <!-- NIVEL 1: JUEGO PRINCIPAL -->
+    <div id="lvl1" class="screen">
+        <div class="top-bar">
+            <div class="badge-nivel">📍 NIVEL 1 // MAQUISUR</div>
+            <div class="mission-info" id="top-mission">Evidencias recuperadas: 0/5</div>
+            <button class="btn-pista" onclick="darPista()">💡 PEDIR PISTA</button>
+        </div>
+
+        <div class="scene-viewport">
+            <img src="NV1-B.png" alt="Taller MAQUISUR" class="scene-img" onerror="this.src='https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1200&auto=format&fit=crop&q=80';">
+            
+            <div class="hotspot" id="hs-alberto" onclick="encontrarAlberto()"></div>
+            <div class="hotspot" id="hs-walle" onclick="encontrar('walle', 'walle', 'OBJETO RECUPERADO: WALL·E\n«El sistema reconoce este objeto. Su importancia parece superar ampliamente su valor material».')"></div>
+            <div class="hotspot" id="hs-cineplanet" onclick="encontrar('cineplanet', 'cineplanet', 'OBJETO RECUPERADO: CANCHITA CINEPLANET\n«Alerta crítica: Se detectó provisión cinematográfica esencial para poder ver la peli».')"></div>
+            <div class="hotspot" id="hs-trebol" onclick="encontrar('trebol', 'trebol', 'OBJETO RECUPERADO: TRÉBOL DE LA SUERTE\n«Suerte la mía de cruzar nuestras vidas en medio de este mundo».')"></div>
+            <div class="hotspot" id="hs-kitty" onclick="encontrar('kitty', 'kitty', 'OBJETO RECUPERADO: HELLO KITTY\n«Siempre donde pasa Nico, hallarás una Kitty dejando huella».')"></div>
+            <div class="hotspot" id="hs-corona" onclick="encontrar('corona', 'corona', 'OBJETO RECUPERADO: CORONA REAL\n«Todas las princesas llevan una, y el sistema confirma un reinado absoluto».')"></div>
+        </div>
+
+        <div class="bottom-panel">
+            <div style="font-size: 0.75rem; color: #888;" id="msg-status">
+                💡 Explora el taller y recolecta las 5 evidencias ocultas.
+            </div>
+            <div class="inventory-slots">
+                <div class="inv-card" id="card-walle">🤖 WALL·E <span id="s-walle">0/1</span></div>
+                <div class="inv-card" id="card-cineplanet">🍿 Cineplanet <span id="s-cineplanet">0/1</span></div>
+                <div class="inv-card" id="card-trebol">🍀 Trébol <span id="s-trebol">0/1</span></div>
+                <div class="inv-card" id="card-kitty">🎀 Kitty <span id="s-kitty">0/1</span></div>
+                <div class="inv-card" id="card-corona">👑 Corona <span id="s-corona">0/1</span></div>
+                <div class="inv-card special-target" id="card-alberto">👤 Alberto <span id="s-alberto">BLOQUEADO</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TRANSICIÓN ENTRE LVL 1 Y LVL 2 -->
+    <div id="lvl1_5" class="screen terminal-screen">
+        <div class="glitch-title" style="font-size: 2rem;">404 // RECUPERACIÓN DE DATOS</div>
+        <h2 style="color: #fff; margin-bottom: 10px; font-size: 1.6rem; letter-spacing: 1px;">ARCHIVO DE RECUERDOS</h2>
+        
+        <div class="terminal-box">
+            <span id="typewriter1_5"></span><span class="cursor" id="cursor1_5">&nbsp;</span>
+        </div>
+
+        <button id="start-btn1_5" class="btn-pink" onclick="iniciarNivel2()">[ RECUPERAR RECUERDOS ]</button>
+    </div>
+
+    <!-- NIVEL 2: EL CINE -->
+    <div id="lvl2" class="screen">
+        <div class="top-bar">
+            <div class="badge-nivel">📍 NIVEL 2 // EL CINE</div>
+            <div class="mission-info" id="top-mission-lvl2">Archivos recuperados: 0/3</div>
+            <button class="btn-pista" onclick="darPistaLvl2()">💡 PEDIR PISTA</button>
+        </div>
+
+        <div class="scene-viewport">
+            <img src="NV2-B.png" alt="Cine Archivo de Recuerdos" class="scene-img" onerror="this.src='https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=1200&auto=format&fit=crop&q=80';">
+            
+            <div class="hotspot" id="hs-milkito" onclick="encontrarLvl2('milkito', 'obj1', 'Paradero Milkito', '24/07/2026', 'Nuestro primer beso...en ese paradero', 'FOTO2.jpeg')"></div>
+            <div class="hotspot" id="hs-fresa" onclick="encontrarLvl2('fresa', 'obj2', 'Fresas y Girasoles', '20/09/2026', 'Nuestro primer paseo juntos &lt;3', 'FOTO3.jpeg')"></div>
+            <div class="hotspot" id="hs-fideos" onclick="encontrarLvl2('fideos', 'obj3', 'Fideos Blancos', '29/06/2026', 'La primera vez que te cociné...aunque parezca vómito :(', 'FOTO4.jpeg')"></div>
+            
+            <div class="hotspot locked-target" id="hs-alberto2" onclick="encontrarAlbertoLvl2()"></div>
+            <div class="hotspot locked-target" id="hs-nico2" onclick="encontrarNicoLvl2()"></div>
+        </div>
+
+        <div class="bottom-panel">
+            <div style="font-size: 0.75rem; color: #888;" id="msg-status-lvl2">
+                💡 Explora el cine y encuentra los objetivos ocultos.
+            </div>
+            <div class="inventory-slots">
+                <div class="inv-card" id="card-obj1">📦 <span id="name-obj1">Objetivo 1</span> <span id="s-obj1">0/1</span></div>
+                <div class="inv-card" id="card-obj2">📦 <span id="name-obj2">Objetivo 2</span> <span id="s-obj2">0/1</span></div>
+                <div class="inv-card" id="card-obj3">📦 <span id="name-obj3">Objetivo 3</span> <span id="s-obj3">0/1</span></div>
+                <div class="inv-card special-target locked-target" id="card-alberto2">🍿 Alberto <span id="s-alberto2">BLOQUEADO</span></div>
+                <div class="inv-card special-target locked-target" id="card-nico2">🎬 Nico <span id="s-nico2">BLOQUEADO</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TRANSICIÓN ENTRE LVL 2 Y LVL 3 -->
+    <div id="lvl2_5" class="screen terminal-screen">
+        <div style="color: var(--pink-accent); font-size: 0.85rem; font-weight: bold; letter-spacing: 1px; margin-bottom: 5px; text-align: left; width: 100%; max-width: 650px;">
+            ARCHIVO RESTAURADO - 3/3
+        </div>
+        <div style="color: #fff; font-size: 1.8rem; font-weight: bold; margin-bottom: 15px; text-align: left; width: 100%; max-width: 650px;">
+            Tres fechas. Tres recuerdos.
+        </div>
+        
+        <div class="terminal-box">
+            <span id="typewriter2_5"></span><span class="cursor" id="cursor2_5">&nbsp;</span>
+        </div>
+
+        <button id="start-btn2_5" class="btn-pink" onclick="iniciarNivel3()">[ EXPLORAR EL MUNDO DE ALBERTO ]</button>
+    </div>
+
+    <!-- NIVEL 3: EL MUNDO DE ALBERTO -->
+    <div id="lvl3" class="screen">
+        <div class="top-bar">
+            <div class="badge-nivel">📍 NIVEL 3 // EL MUNDO DE ALBERTO</div>
+            <div class="mission-info" id="top-mission-lvl3">Easter Eggs encontrados: 0/5</div>
+            <button class="btn-pista" onclick="darPistaLvl3()">💡 PEDIR PISTA</button>
+        </div>
+
+        <div class="scene-viewport">
+            <img src="NV3-B.jpg" alt="El Mundo de Alberto" class="scene-img" onerror="this.src='https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1200&auto=format&fit=crop&q=80';">
+            
+            <div class="hotspot" id="hs-gaby" onclick="encontrarLvl3('gaby', 'gaby', 'OBJETO RECUPERADO: FOTO DE GABY\n«Mi motivo de vivir».')"></div>
+            <div class="hotspot" id="hs-robot" onclick="encontrarLvl3('robot', 'robot', 'OBJETO RECUPERADO: BRAZO ROBÓTICO\n«Mi pasión y mi carrera».')"></div>
+            <div class="hotspot" id="hs-walle3" onclick="encontrarLvl3('walle3', 'walle3', 'OBJETO RECUPERADO: WALL·E\n«Un símbolo de esperanza».')"></div>
+            <div class="hotspot" id="hs-temu" onclick="encontrarLvl3('temu', 'temu', 'OBJETO RECUPERADO: COMPRAS DE TEMU\n«Mi nuevo vicio».')"></div>
+            <div class="hotspot" id="hs-cristal" onclick="encontrarLvl3('cristal', 'cristal', 'OBJETO RECUPERADO: CAMISETA DE CRISTAL\n«Mi club de fútbol de toda la vida».')"></div>
+            
+            <div class="hotspot locked-target" id="hs-laptop" onclick="encontrarLaptopLvl3()"></div>
+        </div>
+
+        <div class="bottom-panel">
+            <div style="font-size: 0.75rem; color: #888;" id="msg-status-lvl3">
+                💡 Explora la habitación y encuentra los 5 elementos personales de Alberto.
+            </div>
+            <div class="inventory-slots">
+                <div class="inv-card" id="card-gaby">🖼️ Foto Gaby <span id="s-gaby">0/1</span></div>
+                <div class="inv-card" id="card-robot">🤖 Robots <span id="s-robot">0/1</span></div>
+                <div class="inv-card" id="card-walle3">🌱 Wall·E <span id="s-walle3">0/1</span></div>
+                <div class="inv-card" id="card-temu">📦 Temu <span id="s-temu">0/1</span></div>
+                <div class="inv-card" id="card-cristal">🎽 Cristal <span id="s-cristal">0/1</span></div>
+                <div class="inv-card special-target locked-target" id="card-laptop">💻 Laptop HP <span id="s-laptop">BLOQUEADO</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TRANSICIÓN ENTRE NIVEL 3 Y NIVEL 4 -->
+    <div id="lvl3_5" class="screen terminal-screen">
+        <div style="color: var(--pink-accent); font-size: 0.85rem; font-weight: bold; letter-spacing: 1px; margin-bottom: 5px; text-align: left; width: 100%; max-width: 650px;">
+            SECUENCIA DE ACCESO - NIVEL 4
+        </div>
+        <div style="color: #fff; font-size: 1.8rem; font-weight: bold; margin-bottom: 15px; text-align: left; width: 100%; max-width: 650px;">
+            El refugio de los sueños y la inspiración.
+        </div>
+        
+        <div class="terminal-box">
+            <span id="typewriter3_5"></span><span class="cursor" id="cursor3_5">&nbsp;</span>
+        </div>
+
+        <button id="start-btn3_5" class="btn-pink" onclick="iniciarNivel4()">[ ENTRAR AL MUNDO DE NICO ]</button>
+    </div>
+
+    <!-- NIVEL 4: EL MUNDO DE NICO -->
+    <div id="lvl4" class="screen">
+        <div class="top-bar">
+            <div class="badge-nivel">📍 NIVEL 4 // EL MUNDO DE NICO</div>
+            <div class="mission-info" id="top-mission-lvl4">Easter Eggs encontrados: 0/5</div>
+            <button class="btn-pista" onclick="darPistaLvl4()">💡 PEDIR PISTA</button>
+        </div>
+
+        <div class="scene-viewport">
+            <img src="NV4-B.jpg" alt="El Mundo de Nico" class="scene-img" onerror="this.src='https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=1200&auto=format&fit=crop&q=80';">
+            
+            <div class="hotspot" id="hs-adviento" onclick="encontrarLvl4('adviento', 'adviento', 'OBJETO RECUPERADO: CALENDARIO DE ADVIENTO\n«Siempre viendo una manera de emprender sin dejar tu esencia!».')"></div>
+            <div class="hotspot" id="hs-frappe" onclick="encontrarLvl4('frappe', 'frappe', 'OBJETO RECUPERADO: FRAPPUCCINO COOKIES & CREAM\n«Tu bebida por excelencia!».')"></div>
+            <div class="hotspot" id="hs-lasagna" onclick="encontrarLvl4('lasagna', 'lasagna', 'OBJETO RECUPERADO: LASAGNA\n«Nuestro placer culposo».')"></div>
+            <div class="hotspot" id="hs-dulces" onclick="encontrarLvl4('dulces', 'dulces', 'OBJETO RECUPERADO: CAJA DE DULCES Y GALLETAS\n«Por esto es que tienes piedritas dentro tuyo :l».')"></div>
+            <div class="hotspot" id="hs-walle4" onclick="encontrarLvl4('walle4', 'walle4', 'OBJETO RECUPERADO: WALL·E LEGO\n«Algo mío en tu mundo rosa».')"></div>
+            
+            <div class="hotspot locked-target" id="hs-pijama" onclick="encontrarPijamaLvl4()"></div>
+        </div>
+
+        <div class="bottom-panel">
+            <div style="font-size: 0.75rem; color: #888;" id="msg-status-lvl4">
+                💡 Explora el mundo de Nico y descubre los easter eggs ocultos.
+            </div>
+            <div class="inventory-slots">
+                <div class="inv-card" id="card-adviento">🎀 Adviento <span id="s-adviento">0/1</span></div>
+                <div class="inv-card" id="card-frappe">🥤 Frappuccino <span id="s-frappe">0/1</span></div>
+                <div class="inv-card" id="card-lasagna">🍝 Lasagna <span id="s-lasagna">0/1</span></div>
+                <div class="inv-card" id="card-dulces">🍬 Dulces <span id="s-dulces">0/1</span></div>
+                <div class="inv-card" id="card-walle4">🤖 Wall·E <span id="s-walle4">0/1</span></div>
+                <div class="inv-card special-target locked-target" id="card-pijama">👚 Pijama VS <span id="s-pijama">BLOQUEADO</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TRANSICIÓN ENTRE NIVEL 4 Y NIVEL 5 -->
+    <div id="lvl4_5" class="screen terminal-screen">
+        <div style="color: var(--pink-accent); font-size: 0.85rem; font-weight: bold; letter-spacing: 1px; margin-bottom: 5px; text-align: left; width: 100%; max-width: 650px;">
+            SECUENCIA FINAL - NIVEL 5
+        </div>
+        <div style="color: #fff; font-size: 1.8rem; font-weight: bold; margin-bottom: 15px; text-align: left; width: 100%; max-width: 650px;">
+            El Santuario Nuestro.
+        </div>
+        
+        <div class="terminal-box">
+            <span id="typewriter4_5"></span><span class="cursor" id="cursor4_5">&nbsp;</span>
+        </div>
+
+        <button id="start-btn4_5" class="btn-pink" onclick="iniciarNivel5()">[ ENTRAR AL SANTUARIO ]</button>
+    </div>
+
+    <!-- NIVEL 5 (FINAL): EL SANTUARIO NUESTRO -->
+    <div id="lvl5" class="screen">
+        <div class="top-bar">
+            <div class="badge-nivel">📍 NIVEL FINAL // EL SANTUARIO NUESTRO</div>
+            <div class="mission-info" id="top-mission-lvl5">Nodos sincronizados: 0/5</div>
+            <button class="btn-pista" onclick="darPistaLvl5()">💡 PEDIR PISTA</button>
+        </div>
+
+        <div class="scene-viewport">
+            <img src="NV5-B.png" alt="El Santuario Nuestro" class="scene-img" onerror="this.src='https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1200&auto=format&fit=crop&q=80';">
+            
+            <!-- Nodos de historia en las pantallas de la constelación -->
+            <div class="hotspot" id="hs-nodo1" onclick="sincronizarNodo('nodo1', 'NODO 1: MAQUISUR\n«Donde todo empezó, conectando sistemas y corazones».')"></div>
+            <div class="hotspot" id="hs-nodo2" onclick="sincronizarNodo('nodo2', 'NODO 2: CINEPLANET\n«Nuestras salidas, películas y risas compartidas».')"></div>
+            <div class="hotspot" id="hs-nodo3" onclick="sincronizarNodo('nodo3', 'NODO 3: GIRASOLES\n«Nuestros primeros paseos llenos de luz y color».')"></div>
+            <div class="hotspot" id="hs-nodo4" onclick="sincronizarNodo('nodo4', 'NODO 4: NUESTRAS BEBIDAS\n«Cada detalle dulce que alimenta nuestra complicidad».')"></div>
+            <div class="hotspot" id="hs-nodo5" onclick="sincronizarNodo('nodo5', 'NODO 5: CUIDADOS Y MOMENTOS\n«Incluso en las pequeñas rutinas, el amor sefortalece».')"></div>
+            
+            <!-- Núcleo Holográfico Central (Bloqueado hasta conectar los 5 nodos) -->
+            <div class="hotspot locked-target" id="hs-nucleo" onclick="activarPropuestaFinal()"></div>
+        </div>
+
+        <div class="bottom-panel">
+            <div style="font-size: 0.75rem; color: #888;" id="msg-status-lvl5">
+                💡 Sincroniza los 5 nodos de la relación en las paredes estelares.
+            </div>
+            <div class="inventory-slots">
+                <div class="inv-card" id="card-n1">✨ Maquisur <span id="s-n1">0/1</span></div>
+                <div class="inv-card" id="card-n2">🎬 Cineplanet <span id="s-n2">0/1</span></div>
+                <div class="inv-card" id="card-n3">🌻 Girasoles <span id="s-n3">0/1</span></div>
+                <div class="inv-card" id="card-n4">🥤 Bebidas <span id="s-n4">0/1</span></div>
+                <div class="inv-card" id="card-n5">💖 Momentos <span id="s-n5">0/1</span></div>
+                <div class="inv-card special-target locked-target" id="card-nucleo">⚛️ Núcleo <span id="s-nucleo">BLOQUEADO</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL PARA RECUERDOS DEL NIVEL 2 -->
+<div class="modal-overlay" id="memoryModal">
+    <div class="modal-card">
+        <h3 style="color: var(--pink-accent); margin-bottom: 5px;" id="modal-title">RECUERDO RECUPERADO</h3>
+        <p style="font-size: 0.8rem; color: var(--pink-light);" id="modal-date"></p>
+        
+        <img id="modal-img" src="" alt="Recuerdo" class="couple-img" onerror="this.src='https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=600&auto=format&fit=crop&q=80';">
+        
+        <p style="font-size: 0.85rem; color: #ddd; line-height: 1.4; margin-bottom: 15px;" id="modal-desc"></p>
+        
+        <button class="btn-pink visible" style="opacity:1; transform:none; padding: 10px 20px; font-size: 0.8rem; width: 100%;" onclick="cerrarModalRecuerdo()">CONTINUAR BÚSQUEDA</button>
+    </div>
+</div>
+
+<!-- MODAL FINAL NIVEL 1 -->
+<div class="modal-overlay" id="winModal">
+    <div class="modal-card">
+        <h3 style="color: var(--pink-accent); margin-bottom: 5px;">¡ALBERTO ENCONTRADO!</h3>
+        <p style="font-size: 0.8rem; color: var(--pink-light);">Sistema MAQUISUR restablecido con éxito.</p>
+        
+        <img src="FOTO1.jpeg" alt="Nico y Alberto" class="couple-img" onerror="this.src='https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=600&auto=format&fit=crop&q=80';">
+        
+        <p style="font-size: 0.85rem; color: #ddd; line-height: 1.4; margin-bottom: 15px;">
+            "En medio de cualquier lugar o rutina, mi mejor proyecto siempre serás tú. ¡Te encontré!" ❤️
+        </p>
+        
+        <button class="btn-pink visible" style="opacity:1; transform:none; padding: 10px 20px; font-size: 0.8rem; width: 100%;" onclick="irATransicionNivel2()">SIGUIENTE NIVEL &gt;&gt;</button>
+    </div>
+</div>
+
+<!-- MODAL FINAL NIVEL 2 -->
+<div class="modal-overlay" id="winModal2">
+    <div class="modal-card">
+        <h3 style="color: var(--pink-accent); margin-bottom: 5px;">¡NICO ENCONTRADA!</h3>
+        <p style="font-size: 0.8rem; color: var(--pink-light);">Cineplanet / Archivo de Recuerdos completado.</p>
+        
+        <img src="FOTO5.jpeg" alt="Nico recargando canchita" class="couple-img" onerror="this.src='https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=600&auto=format&fit=crop&q=80';">
+        
+        <p style="font-size: 0.85rem; color: #ddd; line-height: 1.4; margin-bottom: 15px;">
+            "Cuando no la Niki, queriendo recargar su canchita..." ❤️
+        </p>
+        
+        <button class="btn-pink visible" style="opacity:1; transform:none; padding: 10px 20px; font-size: 0.8rem; width: 100%;" onclick="irATransicionNivel3()">CONTINUAR &gt;&gt;</button>
+    </div>
+</div>
+
+<!-- MODAL FINAL NIVEL 3 -->
+<div class="modal-overlay" id="winModal3">
+    <div class="modal-card">
+        <h3 style="color: var(--pink-accent); margin-bottom: 5px;">¡SISTEMA COMPLETADO AL 100%!</h3>
+        <p style="font-size: 0.8rem; color: var(--pink-light);">Laptop HP conectada: Mi escape del mundo real.</p>
+        
+        <img src="FOTO6.jpeg" alt="Recuerdo Final Alberto y Nico" class="couple-img" onerror="this.src='https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=600&auto=format&fit=crop&q=80';">
+        
+        <p style="font-size: 0.85rem; color: #ddd; line-height: 1.4; margin-bottom: 15px;">
+            "Has recorrido mis proyectos, mis recuerdos y mi espacio más personal. Pero falta conocer el otro lado de la historia..." ❤️
+        </p>
+        
+        <button class="btn-pink visible" style="opacity:1; transform:none; padding: 10px 20px; font-size: 0.8rem; width: 100%;" onclick="irATransicionNivel4()">SIGUIENTE NIVEL &gt;&gt;</button>
+    </div>
+</div>
+
+<!-- MODAL FINAL NIVEL 4 -->
+<div class="modal-overlay" id="winModal4">
+    <div class="modal-card">
+        <h3 style="color: var(--pink-accent); margin-bottom: 5px;">¡PIJAMA ENCONTRADA!</h3>
+        <p style="font-size: 0.8rem; color: var(--pink-light);">El Mundo de Nico / Completado con éxito.</p>
+        
+        <img src="FOTO7.jpeg" alt="Nico y su pijama" class="couple-img" onerror="this.src='https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=600&auto=format&fit=crop&q=80';">
+        
+        <p style="font-size: 0.85rem; color: #ddd; line-height: 1.4; margin-bottom: 15px;">
+            "Tu mejor placer y tu mayor hobby, dormir... Y nuestro mejor proyecto está a punto de revelarse." ❤️
+        </p>
+        
+        <button class="btn-pink visible" style="opacity:1; transform:none; padding: 10px 20px; font-size: 0.8rem; width: 100%;" onclick="irATransicionNivel5()">ENTRAR AL SANTUARIO &gt;&gt;</button>
+    </div>
+</div>
+
+<!-- MODAL DE LA GRAN PROPUESTA (NIVEL 5 FINAL) -->
+<div class="modal-overlay" id="proposalModal">
+    <div class="modal-card" style="max-width: 520px; border-color: #ff69b4; box-shadow: 0 0 40px rgba(255,105,180,0.6);">
+        <h3 style="color: var(--pink-accent); font-size: 1.4rem; margin-bottom: 10px;">✨ STATUS: SISTEMA ENAMORADO ✨</h3>
+        <p style="font-size: 0.8rem; color: var(--pink-light); margin-bottom: 15px;">Alberto y Nico encontrados definitivamente.</p>
+        
+        <img src="FOTO1.jpeg" alt="Propuesta" class="couple-img" style="max-height: 240px;" onerror="this.src='https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=600&auto=format&fit=crop&q=80';">
+        
+        <p style="font-size: 1rem; color: #fff; font-weight: bold; line-height: 1.5; margin: 20px 0;">
+            ¿Quieres ser mi enamorada para toda la vida? ❤️
+        </p>
+        
+        <div style="display: flex; justify-content: center; gap: 20px; position: relative; margin-top: 15px; min-height: 60px;">
+            <button class="btn-pink visible" style="opacity:1; transform:none; padding: 12px 30px; font-size: 0.9rem;" onclick="aceptarPropuesta()">¡SÍ, ACEPTO! 🎉</button>
+            <button id="btn-no" class="btn-pink visible" style="opacity:1; transform:none; background: #333; color: #ff69b4; border: 1px solid #ff69b4; padding: 12px 30px; font-size: 0.9rem; position: relative;" onmouseover="escaparNo()" onclick="escaparNo()">NO 😢</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast-msg" id="toast"></div>
+
+<script>
+    // COLA DE MENSAJES PERSISTENTES
+    let toastQueue = [];
+    let isToastActive = false;
+
+    function mostrarToast(txt) {
+        toastQueue.push(txt);
+        if (!isToastActive) {
+            procesarSiguienteToast();
+        }
+    }
+
+    function procesarSiguienteToast() {
+        if (toastQueue.length === 0) {
+            isToastActive = false;
+            return;
+        }
+
+        isToastActive = true;
+        const txt = toastQueue.shift();
+        const t = document.getElementById('toast');
+        t.innerHTML = txt.replace(/\n/g, '<br>');
+        t.classList.add('show');
+
+        setTimeout(() => {
+            t.classList.remove('show');
+            setTimeout(() => {
+                procesarSiguienteToast();
+            }, 300);
+        }, 2200);
+    }
+
+    function limpiarColaToast() {
+        toastQueue = [];
+        isToastActive = false;
+        const t = document.getElementById('toast');
+        t.classList.remove('show');
+    }
+
+    // SECUENCIA TERMINAL INICIAL
+    const linesLvl0 = [
+        "> Conectando con servidor local...",
+        "> Última conexión: MAQUISUR",
+        "> Estado del sujeto: DESCONOCIDO",
+        "> Iniciando protocolo de rastreo...",
+        "> [ALERTA]: Se requiere intervención de NICO para continuar."
+    ];
+
+    let lineIdx0 = 0, charIdx0 = 0;
+    const target0 = document.getElementById('typewriter0');
+    const startBtn0 = document.getElementById('start-btn0');
+
+    function typeNextChar0() {
+        if (lineIdx0 < linesLvl0.length) {
+            if (charIdx0 < linesLvl0[lineIdx0].length) {
+                target0.innerHTML += linesLvl0[lineIdx0].charAt(charIdx0);
+                charIdx0++;
+                setTimeout(typeNextChar0, 30);
+            } else {
+                target0.innerHTML += "<br>";
+                lineIdx0++;
+                charIdx0 = 0;
+                setTimeout(typeNextChar0, 300);
+            }
+        } else {
+            startBtn0.classList.add('visible');
+        }
+    }
+
+    window.onload = () => {
+        setTimeout(typeNextChar0, 500);
+    };
+
+    function iniciarJuego() {
+        limpiarColaToast();
+        document.getElementById('lvl0').classList.remove('active');
+        document.getElementById('lvl1').classList.add('active');
+    }
+
+    // ESTADOS NIVEL 1
+    let totalItems = 5;
+    let encontradosCount = 0;
+    const estados = { walle: false, cineplanet: false, trebol: false, kitty: false, corona: false, alberto: false };
+
+    const pistasTextos = {
+        walle: "Revisa cerca de las estanterías de la derecha, el pequeño robot vigila por ahí.",
+        cineplanet: "La canchita de cine está sobre las mesas de prueba del sector derecho.",
+        trebol: "Busca un pequeño trébol verde de la suerte sobre los rieles y herramientas de abajo.",
+        kitty: "Arriba a la izquierda, en lo alto de las repisas, hay alguien saludando con lazo.",
+        corona: "En la esquina inferior izquierda, sobre los apuntes y planos, reluce un accesorio real."
+    };
+
+    function darPista() {
+        const pendientes = Object.keys(estados).filter(k => k !== 'alberto' && !estados[k]);
+        if (pendientes.length > 0) {
+            const objetivoId = pendientes[0];
+            mostrarToast("💡 Pista: " + pistasTextos[objetivoId]);
+            const hotspotEl = document.getElementById('hs-' + objetivoId);
+            if (hotspotEl) {
+                hotspotEl.classList.add('hint-blink');
+                setTimeout(() => hotspotEl.classList.remove('hint-blink'), 1500);
+            }
+        } else if (!estados.alberto) {
+            mostrarToast("💡 Pista: ¡Todas las evidencias están listas! Detecta la anomalía y busca a Alberto.");
+            const albertoEl = document.getElementById('hs-alberto');
+            if (albertoEl) {
+                albertoEl.classList.add('hint-blink');
+                setTimeout(() => albertoEl.classList.remove('hint-blink'), 1500);
+            }
+        }
+    }
+
+    function encontrar(id, cardId, mensaje) {
+        if (estados[id]) return;
+        estados[id] = true;
+        encontradosCount++;
+        
+        document.getElementById('hs-' + id).classList.add('found');
+        const card = document.getElementById('card-' + cardId);
+        card.classList.add('unlocked');
+        document.getElementById('s-' + cardId).innerText = '1/1';
+        
+        const missionInfo = document.getElementById('top-mission');
+        missionInfo.innerText = `Evidencias recuperadas: ${encontradosCount}/${totalItems}`;
+        missionInfo.classList.add('pulse');
+        setTimeout(() => missionInfo.classList.remove('pulse'), 400);
+
+        document.getElementById('msg-status').innerText = mensaje.split('\n')[0];
+        mostrarToast(mensaje);
+
+        if (encontradosCount === totalItems) {
+            mostrarToast("🚨 ¡ALERTA DEL SISTEMA!\n«Todas las evidencias han sido recuperadas. Se detectó una anomalía en el taller MAQUISUR».");
+            
+            setTimeout(() => {
+                document.getElementById('hs-alberto').classList.add('unlocked');
+                missionInfo.innerText = "¡Anomalía detectada! Encuentra a Alberto 👤";
+                document.getElementById('msg-status').innerText = "🔓 ¡Búsqueda de Alberto habilitada en el taller!";
+                document.getElementById('s-alberto').innerText = "LISTO";
+                mostrarToast("🔓 ¡El rastro de Alberto está activo! Búscalo operando las máquinas.");
+            }, 1000);
+        }
+    }
+
+    function encontrarAlberto() {
+        if (encontradosCount < totalItems) {
+            mostrarToast("🔒 Acceso denegado: Aún faltan evidencias por recuperar en el taller.");
+            return;
+        }
+        if (estados.alberto) return;
+        estados.alberto = true;
+        
+        document.getElementById('hs-alberto').classList.add('found');
+        document.getElementById('card-alberto').classList.add('unlocked');
+        document.getElementById('s-alberto').innerText = '1/1';
+        
+        document.getElementById('winModal').classList.add('show');
+    }
+
+    // TRANSICIÓN NIVEL 1 -> 2
+    const linesLvl1_5 = [
+        "> Objetivo principal: Alberto ......... ENCONTRADO",
+        "> Registros compartidos ............. INCOMPLETOS",
+        "> Ubicación de los archivos ......... DESCONOCIDA",
+        "> Última coincidencia ............... CINE",
+        "--------------------------------------------------",
+        "Hay momentos que el sistema no puede reconstruir por sí solo.",
+        "",
+        "<span style='color: var(--pink-light); font-weight: bold;'>Nico, necesitamos tu ayuda otra vez.</span>"
+    ];
+
+    let lineIdx1_5 = 0, charIdx1_5 = 0;
+
+    function irATransicionNivel2() {
+        limpiarColaToast();
+        document.getElementById('winModal').classList.remove('show');
+        document.getElementById('lvl1').classList.remove('active');
+        document.getElementById('lvl1_5').classList.add('active');
+        setTimeout(typeNextChar1_5, 400);
+    }
+
+    function typeNextChar1_5() {
+        const target = document.getElementById('typewriter1_5');
+        const startBtn = document.getElementById('start-btn1_5');
+
+        if (lineIdx1_5 < linesLvl1_5.length) {
+            let currentLine = linesLvl1_5[lineIdx1_5];
+            if (currentLine.startsWith('<span')) {
+                target.innerHTML += currentLine + "<br>";
+                lineIdx1_5++;
+                setTimeout(typeNextChar1_5, 400);
+            } else if (charIdx1_5 < currentLine.length) {
+                target.innerHTML += currentLine.charAt(charIdx1_5);
+                charIdx1_5++;
+                setTimeout(typeNextChar1_5, 25);
+            } else {
+                target.innerHTML += "<br>";
+                lineIdx1_5++;
+                charIdx1_5 = 0;
+                setTimeout(typeNextChar1_5, 250);
+            }
+        } else {
+            startBtn.classList.add('visible');
+        }
+    }
+
+    function iniciarNivel2() {
+        limpiarColaToast();
+        document.getElementById('lvl1_5').classList.remove('active');
+        document.getElementById('lvl2').classList.add('active');
+        mostrarToast("🎬 ¡Cargando Nivel 2: Cineplanet!");
+    }
+
+    // ESTADOS NIVEL 2
+    let encontradosCount2 = 0;
+    const estados2 = { milkito: false, fresa: false, fideos: false, alberto2: false, nico2: false };
+    const pistasLvl2 = {
+        milkito: "Busca en la parte superior central, colgando como una placa de avenida.",
+        fresa: "Revisa cerca de las mesas de los sofás en la zona inferior izquierda.",
+        fideos: "Hay un plato humeante sobre una mesita o soporte cerca de las plantas y pasillos centrales."
+    };
+
+    function darPistaLvl2() {
+        const pendientes = ['milkito', 'fresa', 'fideos'].filter(k => !estados2[k]);
+        if (pendientes.length > 0) {
+            const objId = pendientes[0];
+            mostrarToast("💡 Pista: " + pistasLvl2[objId]);
+            const el = document.getElementById('hs-' + objId);
+            if (el) {
+                el.classList.add('hint-blink');
+                setTimeout(() => el.classList.remove('hint-blink'), 1500);
+            }
+        } else if (!estados2.alberto2) {
+            mostrarToast("💡 Pista: ¡Ya hallaste los recuerdos! Busca a Alberto llevando la bandeja.");
+            const el = document.getElementById('hs-alberto2');
+            if (el) {
+                el.classList.add('hint-blink');
+                setTimeout(() => el.classList.remove('hint-blink'), 1500);
+            }
+        } else if (!estados2.nico2) {
+            mostrarToast("💡 Pista: ¡Busca a Nico en el mostrador esperando su recarga!");
+            const el = document.getElementById('hs-nico2');
+            if (el) {
+                el.classList.add('hint-blink');
+                setTimeout(() => el.classList.remove('hint-blink'), 1500);
+            }
+        } else {
+            mostrarToast("💡 ¡Nivel completado con éxito!");
+        }
+    }
+
+    function encontrarLvl2(id, cardIdSuffix, realName, dateStr, desc, imgFile) {
+        if (estados2[id]) return;
+        estados2[id] = true;
+        encontradosCount2++;
+
+        document.getElementById('hs-' + id).classList.add('found');
+        
+        document.getElementById('name-' + cardIdSuffix).innerText = realName;
+        const card = document.getElementById('card-' + cardIdSuffix);
+        card.classList.add('unlocked');
+        document.getElementById('s-' + cardIdSuffix).innerText = '1/1';
+
+        const missionInfo = document.getElementById('top-mission-lvl2');
+        missionInfo.innerText = `Archivos recuperados: ${encontradosCount2}/3`;
+        missionInfo.classList.add('pulse');
+        setTimeout(() => missionInfo.classList.remove('pulse'), 400);
+
+        document.getElementById('modal-title').innerText = realName.toUpperCase();
+        document.getElementById('modal-date').innerText = dateStr;
+        document.getElementById('modal-desc').innerText = desc;
+        document.getElementById('modal-img').src = imgFile;
+        document.getElementById('memoryModal').classList.add('show');
+    }
+
+    function cerrarModalRecuerdo() {
+        document.getElementById('memoryModal').classList.remove('show');
+
+        if (encontradosCount2 === 3 && !estados2.alberto2) {
+            const cardAlberto = document.getElementById('card-alberto2');
+            cardAlberto.classList.remove('locked-target');
+            const hsAlberto = document.getElementById('hs-alberto2');
+            hsAlberto.classList.remove('locked-target');
+            hsAlberto.classList.add('unlocked-target');
+            document.getElementById('s-alberto2').innerText = 'LISTO';
+            document.getElementById('msg-status-lvl2').innerText = "🔓 ¡Búsqueda de Alberto habilitada en el cine!";
+            mostrarToast("🔓 ¡Alberto ha aparecido en el cine! Búscalo con su bandeja.");
+        }
+    }
+
+    function encontrarAlbertoLvl2() {
+        if (encontradosCount2 < 3) return;
+        if (estados2.alberto2) return;
+        estados2.alberto2 = true;
+
+        document.getElementById('hs-alberto2').classList.add('found');
+        document.getElementById('card-alberto2').classList.add('unlocked');
+        document.getElementById('s-alberto2').innerText = '1/1';
+        document.getElementById('msg-status-lvl2').innerText = "🍿 Alberto encontrado.";
+
+        mostrarToast("🍿 Alberto: «En la bandeja lleva dos gaseosas y una cancha...solo una?»");
+
+        setTimeout(() => {
+            const cardNico = document.getElementById('card-nico2');
+            cardNico.classList.remove('locked-target');
+            const hsNico = document.getElementById('hs-nico2');
+            hsNico.classList.remove('locked-target');
+            hsNico.classList.add('unlocked-target');
+            document.getElementById('s-nico2').innerText = 'LISTO';
+            document.getElementById('msg-status-lvl2').innerText = "🔓 ¡Último objetivo habilitado! Encuentra a Nico en el mostrador.";
+            mostrarToast("🔓 ¡Último objetivo habilitado! Encuentra a Nico en el mostrador.");
+        }, 1200);
+    }
+
+    function encontrarNicoLvl2() {
+        if (!estados2.alberto2) return;
+        if (estados2.nico2) return;
+        estados2.nico2 = true;
+
+        document.getElementById('hs-nico2').classList.add('found');
+        document.getElementById('card-nico2').classList.add('unlocked');
+        document.getElementById('s-nico2').innerText = '1/1';
+        document.getElementById('msg-status-lvl2').innerText = "🎬 ¡Nico encontrada!";
+
+        mostrarToast("🎬 Nico: «Aquí está...recargando la canchita!»");
+
+        setTimeout(() => {
+            document.getElementById('winModal2').classList.add('show');
+        }, 1000);
+    }
+
+    // TRANSICIÓN NIVEL 2 -> 3
+    const linesLvl2_5 = [
+        "Una cena que inició algo, un beso que cambió algo y un viaje que añadió una nueva página a nuestra historia.",
+        "--------------------------------------------------------------------------------",
+        "| Registros restaurados: 100%",
+        "| Compatibilidad del sistema: EN ESTUDIO",
+        "| Próxima ubicación detectada: EL MUNDO DE ALBERTO"
+    ];
+
+    let lineIdx2_5 = 0, charIdx2_5 = 0;
+
+    function irATransicionNivel3() {
+        limpiarColaToast();
+        document.getElementById('winModal2').classList.remove('show');
+        document.getElementById('lvl2').classList.remove('active');
+        document.getElementById('lvl2_5').classList.add('active');
+        setTimeout(typeNextChar2_5, 400);
+    }
+
+    function typeNextChar2_5() {
+        const target = document.getElementById('typewriter2_5');
+        const startBtn = document.getElementById('start-btn2_5');
+
+        if (lineIdx2_5 < linesLvl2_5.length) {
+            let currentLine = linesLvl2_5[lineIdx2_5];
+            
+            if (charIdx2_5 < currentLine.length) {
+                target.innerHTML += currentLine.charAt(charIdx2_5);
+                charIdx2_5++;
+                setTimeout(typeNextChar2_5, 25);
+            } else {
+                target.innerHTML += "<br>";
+                lineIdx2_5++;
+                charIdx2_5 = 0;
+                setTimeout(typeNextChar2_5, 250);
+            }
+        } else {
+            startBtn.classList.add('visible');
+        }
+    }
+
+    function iniciarNivel3() {
+        limpiarColaToast();
+        document.getElementById('lvl2_5').classList.remove('active');
+        document.getElementById('lvl3').classList.add('active');
+        mostrarToast("💻 ¡Cargando Nivel 3: El Mundo de Alberto!");
+    }
+
+    // ESTADOS NIVEL 3
+    let encontradosCount3 = 0;
+    const totalItems3 = 5;
+    const estados3 = { gaby: false, robot: false, walle3: false, temu: false, cristal: false, laptop: false };
+
+    const pistasLvl3 = {
+        gaby: "Busca en el portarretratos de la repisa superior izquierda.",
+        robot: "El brazo robótico está en la repisa superior, junto a la foto.",
+        walle3: "Wall·E está en la segunda repisa descendente, en la estantería izquierda.",
+        temu: "Las cajas de envíos están en la esquina inferior derecha, al lado de la veladora.",
+        cristal: "La camiseta celeste está colgada a la derecha de la ventana."
+    };
+
+    function darPistaLvl3() {
+        const pendientes = ['gaby', 'robot', 'walle3', 'temu', 'cristal'].filter(k => !estados3[k]);
+        if (pendientes.length > 0) {
+            const objId = pendientes[0];
+            mostrarToast("💡 Pista: " + pistasLvl3[objId]);
+            const el = document.getElementById('hs-' + objId);
+            if (el) {
+                el.classList.add('hint-blink');
+                setTimeout(() => el.classList.remove('hint-blink'), 1500);
+            }
+        } else if (!estados3.laptop) {
+            mostrarToast("💡 Pista: ¡Todos los easter eggs recuperados! Interactúa con la Laptop HP en el escritorio.");
+            const el = document.getElementById('hs-laptop');
+            if (el) {
+                el.classList.add('hint-blink');
+                setTimeout(() => el.classList.remove('hint-blink'), 1500);
+            }
+        } else {
+            mostrarToast("💡 ¡Nivel completado con éxito!");
+        }
+    }
+
+    function encontrarLvl3(id, cardId, mensaje) {
+        if (estados3[id]) return;
+        estados3[id] = true;
+        encontradosCount3++;
+
+        document.getElementById('hs-' + id).classList.add('found');
+        const card = document.getElementById('card-' + cardId);
+        card.classList.add('unlocked');
+        document.getElementById('s-' + cardId).innerText = '1/1';
+
+        const missionInfo = document.getElementById('top-mission-lvl3');
+        missionInfo.innerText = `Easter Eggs encontrados: ${encontradosCount3}/${totalItems3}`;
+        missionInfo.classList.add('pulse');
+        setTimeout(() => missionInfo.classList.remove('pulse'), 400);
+
+        document.getElementById('msg-status-lvl3').innerText = mensaje.split('\n')[0];
+        mostrarToast(mensaje);
+
+        if (encontradosCount3 === totalItems3) {
+            mostrarToast("🚨 ¡SISTEMA RESTAURADO!\n«Todos los objetos personales han sido identificados. La Laptop HP está lista para el acceso».");
+            
+            setTimeout(() => {
+                const cardLaptop = document.getElementById('card-laptop');
+                cardLaptop.classList.remove('locked-target');
+                const hsLaptop = document.getElementById('hs-laptop');
+                hsLaptop.classList.remove('locked-target');
+                hsLaptop.classList.add('unlocked-target');
+                document.getElementById('s-laptop').innerText = 'LISTO';
+                document.getElementById('msg-status-lvl3').innerText = "🔓 ¡Acceso a la Laptop HP habilitado!";
+                mostrarToast("🔓 ¡Has desbloqueado la Laptop HP! Haz clic en ella para finalizar.");
+            }, 1000);
+        }
+    }
+
+    function encontrarLaptopLvl3() {
+        if (encontradosCount3 < totalItems3) {
+            mostrarToast("🔒 Acceso denegado: Aún faltan objetos personales por descubrir.");
+            return;
+        }
+        if (estados3.laptop) return;
+        estados3.laptop = true;
+
+        document.getElementById('hs-laptop').classList.add('found');
+        document.getElementById('card-laptop').classList.add('unlocked');
+        document.getElementById('s-laptop').innerText = '1/1';
+        document.getElementById('msg-status-lvl3').innerText = "💻 Laptop HP conectada.";
+
+        mostrarToast("💻 Laptop HP: «Mi escape del mundo real».");
+
+        setTimeout(() => {
+            document.getElementById('winModal3').classList.add('show');
+        }, 1200);
+    }
+
+    // TRANSICIÓN NIVEL 3 -> 4
+    const linesLvl3_5 = [
+        "Has descifrado mi código, explorado mis rincones y encontrado lo que más valoro...",
+        "Pero cada sistema binario necesita su complemento perfecto.",
+        "--------------------------------------------------------------------------------",
+        "| Nodo principal: ALBERTO ......... SINCRONIZADO",
+        "| Nodo complementario: NICO ....... BUSCANDO...",
+        "| Destino final: EL MUNDO DE NICO"
+    ];
+
+    let lineIdx3_5 = 0, charIdx3_5 = 0;
+
+    function irATransicionNivel4() {
+        limpiarColaToast();
+        document.getElementById('winModal3').classList.remove('show');
+        document.getElementById('lvl3').classList.remove('active');
+        document.getElementById('lvl3_5').classList.add('active');
+        setTimeout(typeNextChar3_5, 400);
+    }
+
+    function typeNextChar3_5() {
+        const target = document.getElementById('typewriter3_5');
+        const startBtn = document.getElementById('start-btn3_5');
+
+        if (lineIdx3_5 < linesLvl3_5.length) {
+            let currentLine = linesLvl3_5[lineIdx3_5];
+            
+            if (charIdx3_5 < currentLine.length) {
+                target.innerHTML += currentLine.charAt(charIdx3_5);
+                charIdx3_5++;
+                setTimeout(typeNextChar3_5, 25);
+            } else {
+                target.innerHTML += "<br>";
+                lineIdx3_5++;
+                charIdx3_5 = 0;
+                setTimeout(typeNextChar3_5, 250);
+            }
+        } else {
+            startBtn.classList.add('visible');
+        }
+    }
+
+    function iniciarNivel4() {
+        limpiarColaToast();
+        document.getElementById('lvl3_5').classList.remove('active');
+        document.getElementById('lvl4').classList.add('active');
+        mostrarToast("🎀 ¡Cargando Nivel 4: El Mundo de Nico!");
+    }
+
+    // ESTADOS NIVEL 4
+    let encontradosCount4 = 0;
+    const totalItems4 = 5;
+    const estados4 = { adviento: false, frappe: false, lasagna: false, dulces: false, walle4: false, pijama: false };
+
+    const pistasLvl4 = {
+        adviento: "Busca en el estante de la izquierda, dentro del gabinete rosado abierto de Hello Kitty.",
+        frappe: "El frappuccino de cookies & cream está sobre la mesa de centro de vidrio.",
+        lasagna: "Hay un delicioso plato de lasagna servido en la mesa de centro.",
+        dulces: "La caja llena de dulces y galletas está en la esquina inferior derecha.",
+        walle4: "El pequeño Wall·E está sobre el mueble de entretenimiento negro debajo de la televisión."
+    };
+
+    function darPistaLvl4() {
+        const pendientes = ['adviento', 'frappe', 'lasagna', 'dulces', 'walle4'].filter(k => !estados4[k]);
+        if (pendientes.length > 0) {
+            const objId = pendientes[0];
+            mostrarToast("💡 Pista: " + pistasLvl4[objId]);
+            const el = document.getElementById('hs-' + objId);
+            if (el) {
+                el.classList.add('hint-blink');
+                setTimeout(() => el.classList.remove('hint-blink'), 1500);
+            }
+        } else if (!estados4.pijama) {
+            mostrarToast("💡 Pista: ¡Todos los easter eggs encontrados! Busca la pijama colgada en la pared.");
+            const el = document.getElementById('hs-pijama');
+            if (el) {
+                el.classList.add('hint-blink');
+                setTimeout(() => el.classList.remove('hint-blink'), 1500);
+            }
+        } else {
+            mostrarToast("💡 ¡Nivel completado!");
+        }
+    }
+
+    function encontrarLvl4(id, cardId, mensaje) {
+        if (estados4[id]) return;
+        estados4[id] = true;
+        encontradosCount4++;
+
+        document.getElementById('hs-' + id).classList.add('found');
+        const card = document.getElementById('card-' + cardId);
+        card.classList.add('unlocked');
+        document.getElementById('s-' + cardId).innerText = '1/1';
+
+        const missionInfo = document.getElementById('top-mission-lvl4');
+        missionInfo.innerText = `Easter Eggs encontrados: ${encontradosCount4}/${totalItems4}`;
+        missionInfo.classList.add('pulse');
+        setTimeout(() => missionInfo.classList.remove('pulse'), 400);
+
+        document.getElementById('msg-status-lvl4').innerText = mensaje.split('\n')[0];
+        mostrarToast(mensaje);
+
+        if (encontradosCount4 === totalItems4) {
+            mostrarToast("🚨 ¡SISTEMA COMPLETADO!\n«Todos los elementos de Nico han sido hallados. El objetivo final está disponible».");
+            
+            setTimeout(() => {
+                const cardPijama = document.getElementById('card-pijama');
+                cardPijama.classList.remove('locked-target');
+                const hsPijama = document.getElementById('hs-pijama');
+                hsPijama.classList.remove('locked-target');
+                hsPijama.classList.add('unlocked-target');
+                document.getElementById('s-pijama').innerText = 'LISTO';
+                document.getElementById('msg-status-lvl4').innerText = "🔓 ¡Pijama de Victoria's Secret desbloqueada!";
+                mostrarToast("🔓 ¡Busca y haz clic en la pijama colgada para terminar!");
+            }, 1000);
+        }
+    }
+
+    function encontrarPijamaLvl4() {
+        if (encontradosCount4 < totalItems4) {
+            mostrarToast("🔒 Acceso denegado: Aún faltan easter eggs de Nico por descubrir.");
+            return;
+        }
+        if (estados4.pijama) return;
+        estados4.pijama = true;
+
+        document.getElementById('hs-pijama').classList.add('found');
+        document.getElementById('card-pijama').classList.add('unlocked');
+        document.getElementById('s-pijama').innerText = '1/1';
+        document.getElementById('msg-status-lvl4').innerText = "👚 Pijama encontrada.";
+
+        mostrarToast("👚 Pijama Victoria's Secret: «Tu mejor placer y tu mayor hobby, dormir.»");
+
+        setTimeout(() => {
+            document.getElementById('winModal4').classList.add('show');
+        }, 1200);
+    }
+
+    // TRANSICIÓN NIVEL 4 -> 5
+    const linesLvl4_5 = [
+        "Sistemas integrados: 100%",
+        "Sincronización de mundos: COMPLETADA",
+        "--------------------------------------------------------------------------------",
+        "| Todos los archivos, recuerdos y fragmentos han convergido.",
+        "| Se detecta un espacio común exclusivo...",
+        "| Cargando: EL SANTUARIO NUESTRO"
+    ];
+
+    let lineIdx4_5 = 0, charIdx4_5 = 0;
+
+    function irATransicionNivel5() {
+        limpiarColaToast();
+        document.getElementById('winModal4').classList.remove('show');
+        document.getElementById('lvl4').classList.remove('active');
+        document.getElementById('lvl4_5').classList.add('active');
+        setTimeout(typeNextChar4_5, 400);
+    }
+
+    function typeNextChar4_5() {
+        const target = document.getElementById('typewriter4_5');
+        const startBtn = document.getElementById('start-btn4_5');
+
+        if (lineIdx4_5 < linesLvl4_5.length) {
+            let currentLine = linesLvl4_5[lineIdx4_5];
+            
+            if (charIdx4_5 < currentLine.length) {
+                target.innerHTML += currentLine.charAt(charIdx4_5);
+                charIdx4_5++;
+                setTimeout(typeNextChar4_5, 25);
+            } else {
+                target.innerHTML += "<br>";
+                lineIdx4_5++;
+                charIdx4_5 = 0;
+                setTimeout(typeNextChar4_5, 250);
+            }
+        } else {
+            startBtn.classList.add('visible');
+        }
+    }
+
+    function iniciarNivel5() {
+        limpiarColaToast();
+        document.getElementById('lvl4_5').classList.remove('active');
+        document.getElementById('lvl5').classList.add('active');
+        mostrarToast("✨ ¡Cargando Nivel Final: El Santuario Nuestro!");
+    }
+
+    // ESTADOS NIVEL 5
+    let nodosCount5 = 0;
+    const totalNodos5 = 5;
+    const estados5 = { nodo1: false, nodo2: false, nodo3: false, nodo4: false, nodo5: false, nucleo: false };
+
+    const pistasLvl5 = {
+        nodo1: "Busca en la pantalla flotante superior izquierda (Maquisur).",
+        nodo2: "Revisa la pantalla flotante superior central-derecha (Cineplanet).",
+        nodo3: "Inspecciona la pantalla flotante de la esquina superior derecha (Girasoles).",
+        nodo4: "Busca en la pantalla flotante lateral izquierda inferior (Bebidas).",
+        nodo5: "Revisa las pantallas flotantes del lado derecho medio (Momentos)."
+    };
+
+    function darPistaLvl5() {
+        const pendientes = ['nodo1', 'nodo2', 'nodo3', 'nodo4', 'nodo5'].filter(k => !estados5[k]);
+        if (pendientes.length > 0) {
+            const objId = pendientes[0];
+            mostrarToast("💡 Pista: " + pistasLvl5[objId]);
+            const el = document.getElementById('hs-' + objId);
+            if (el) {
+                el.classList.add('hint-blink');
+                setTimeout(() => el.classList.remove('hint-blink'), 1500);
+            }
+        } else if (!estados5.nucleo) {
+            mostrarToast("💡 Pista: ¡Todos los nodos sincronizados! Activa el Núcleo Holográfico Central.");
+            const el = document.getElementById('hs-nucleo');
+            if (el) {
+                el.classList.add('hint-blink');
+                setTimeout(() => el.classList.remove('hint-blink'), 1500);
+            }
+        }
+    }
+
+    function sincronizarNodo(id, mensaje) {
+        if (estados5[id]) return;
+        estados5[id] = true;
+        nodosCount5++;
+
+        const cardNum = id.replace('nodo', 'n');
+        document.getElementById('hs-' + id).classList.add('found');
+        const card = document.getElementById('card-' + cardNum);
+        card.classList.add('unlocked');
+        document.getElementById('s-' + cardNum).innerText = '1/1';
+
+        const missionInfo = document.getElementById('top-mission-lvl5');
+        missionInfo.innerText = `Nodos sincronizados: ${nodosCount5}/${totalNodos5}`;
+        missionInfo.classList.add('pulse');
+        setTimeout(() => missionInfo.classList.remove('pulse'), 400);
+
+        mostrarToast(mensaje);
+
+        if (nodosCount5 === totalNodos5) {
+            mostrarToast("✨ ¡NODOS SINCRONIZADOS!\n«El santuario está completo. El núcleo central responde al estímulo».");
+            
+            setTimeout(() => {
+                const cardNucleo = document.getElementById('card-nucleo');
+                cardNucleo.classList.remove('locked-target');
+                const hsNucleo = document.getElementById('hs-nucleo');
+                hsNucleo.classList.remove('locked-target');
+                hsNucleo.classList.add('unlocked-target');
+                document.getElementById('s-nucleo').innerText = 'LISTO';
+                document.getElementById('msg-status-lvl5').innerText = "🔓 ¡Núcleo Holográfico activado!";
+                mostrarToast("🔓 ¡Haz clic en el Núcleo Holográfico central para la gran propuesta!");
+            }, 1000);
+        }
+    }
+
+    function activarPropuestaFinal() {
+        if (nodosCount5 < totalNodos5) {
+            mostrarToast("🔒 Acceso denegado: Faltan nodos de historia por sincronizar.");
+            return;
+        }
+        if (estados5.nucleo) return;
+        estados5.nucleo = true;
+
+        document.getElementById('hs-nucleo').classList.add('found');
+        document.getElementById('card-nucleo').classList.add('unlocked');
+        document.getElementById('s-nucleo').innerText = '1/1';
+
+        // Efecto de glitch / parpadeo rosa brillante
+        document.body.classList.add('glitch-active');
+        mostrarToast("💖 ¡SISTEMA COLapsado POR AMOR! Las pantallas brillan intensamente.");
+
+        setTimeout(() => {
+            document.getElementById('proposalModal').classList.add('show');
+        }, 1200);
+    }
+
+    // BOTÓN "NO" QUE SE ESCAPA
+    function escaparNo() {
+        const btnNo = document.getElementById('btn-no');
+        const randomX = (Math.random() - 0.5) * 180;
+        const randomY = (Math.random() - 0.5) * 100;
+        btnNo.style.transform = `translate(${randomX}px, ${randomY}px)`;
+        mostrarToast("¡Oye! Ese botón no funciona por aquí 😉");
+    }
+
+    function aceptarPropuesta() {
+        document.body.classList.remove('glitch-active');
+        document.getElementById('proposalModal').classList.remove('show');
+        alert("🎉 ¡FELICIDADES! Has completado el juego y aceptado la propuesta para toda la vida. ¡Te amo con todo mi corazón! ❤️");
+    }
+</script>
+</body>
+</html>
